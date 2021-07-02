@@ -3,7 +3,7 @@ import { v4 } from "uuid";
 
 import { app } from "../index";
 import { UsersRepository } from "../modules/users/repositories/implementations/UsersRepository";
-
+import { UserAlreadyExists } from '../modules/users/useCases/createUser/CreateUserController'
 describe("[POST] /users", () => {
   it("should be able to create new users", async () => {
     const response = await request(app)
@@ -22,15 +22,26 @@ describe("[POST] /users", () => {
   });
 
   it("should not be able to create new users when email is already taken", async () => {
+    const userAlreadyExistsError = new UserAlreadyExists()
+
+    const user = {
+      name: "John Doe",
+      email: "john.doe@example.com",
+    }
+
+    const usersRepository = UsersRepository.getInstance();
+    
+    usersRepository.create(user)
+
     const response = await request(app)
       .post("/users")
-      .send({
-        name: "John Doe",
-        email: "john.doe@example.com",
-      })
-      .expect(400);
+      .send(user)
+      .expect(userAlreadyExistsError.status);
 
     expect(response.body.error).toBeTruthy();
+
+    expect(response.body.error).toEqual(userAlreadyExistsError.message);
+
   });
 });
 
@@ -114,7 +125,7 @@ describe("[GET] /users", () => {
     });
 
     const response = await request(app).get("/users").set("user_id", user1.id);
-
+    
     expect(
       response.body.map((res) => ({
         ...res,
