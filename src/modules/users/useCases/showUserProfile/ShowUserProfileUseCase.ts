@@ -13,7 +13,7 @@ class ShowUserProfileUseCase {
     if(user){
       return user;  
     }
-    throw new Error("User Already Exists");
+    throw new Error("User doesn't Exists");
   }
 }
 
